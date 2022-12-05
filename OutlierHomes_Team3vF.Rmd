@@ -1,7 +1,7 @@
 ---
 title: "Outliers"
-author: "Tim Sun, Josh Orellana, Mark Mitchell, Tony Segura, Yi Xu"
-date: "10/29/2022"
+author: "[Redacted]"
+date: "[Redacted]
 output:
   html_document: default
   pdf_document: default
