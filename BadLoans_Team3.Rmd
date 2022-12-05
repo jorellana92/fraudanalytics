@@ -1,6 +1,6 @@
 ---
 title: "BadLoans"
-author: "Tim Sun, Josh Orellana, Mark Mitchell, Tony Segura, Yi Xu"
+author: "[redacted]"
 date: "11/12/2022"
 output:
   html_document: default
