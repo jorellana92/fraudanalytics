@@ -1,0 +1,497 @@
+---
+title: "Outliers"
+author: "Tim Sun, Josh Orellana, Mark Mitchell, Tony Segura, Yi Xu"
+date: "10/29/2022"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+
+
+
+## R Markdown
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+**This exercise is under construction. Please report any errors at https://forms.gle/2W4tffs4YJA1jeBv9**
+
+Goal: 
+Understand and experience outlier detection techniques in action.
+
+Background:
+The data for this question has been adapted from https://www.kaggle.com/c/house-prices-advanced-regression-techniques/data. Please review information at https://www.kaggle.com/c/house-prices-advanced-regression-techniques/overview before you get started.
+
+Before starting:
+1. You are not allowed to search for solutions to this assignment.
+2. You are allowed to search information about packages and functions that can help you.
+
+Individual assignment only: 70 total points (Rmd and html solution)
+Team assignment: 20 points (written analysis)
+
+## [1 point] Q1.
+*Start by entering your name and today's date in Lines 3 and 4, respectively, to indicate your compliance with the Fuqua Honor Code.* 
+*Then, run the chunk of code below by clicking on the green arrow (that points to the right) on the top right of the chunk.*
+*Tip: I numbered code chunks corresponding to their numbers. Chunk 1 specified the knitting parameters.*
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+```
+
+## [4 points] Q2.
+*Read and store the data from the file PricesBefore2009.csv into a variable called before2009.*
+*Then, inspect the data using at least two commands.*
+*Rubric: 1 each point for reading and storing; 1 points each for using 2 R commands for inspecting.*
+*Tip: I recommend using the read_csv() function from the tidyverse package to do this for this and all subsequent work in R because it is safer than read.csv().*
+
+```{r}
+#rm(list = ls())
+#ls()
+
+library(tidyverse)
+before2009 = read_csv("PricesBefore2009.csv")
+#dim(before2009)
+str(before2009)
+summary(before2009)
+
+
+```
+
+## [4 points] Q3.
+*MSSubClass, OverallQual, and OverallCond appear as numeric types but are categories IRL. Treat them to set them up for analysis (and store the result back into before2009 dataframe).*
+*Then, inspect the resulting before2009 to verify that your code works.*
+*Tip: Categories can be handled by character or factor type.* 
+*Rubric: 3 points (1 point each) for conversion and 1 point for verification.*
+
+```{r}
+# Convert col names MSSubClass, OverallQual, and OverallCond from numeric type to character type
+before2009$MSSubClass = as.character(before2009$MSSubClass)
+before2009$OverallQual = as.character(before2009$OverallQual)
+before2009$OverallCond = as.character(before2009$OverallCond)
+
+# Verify the three col names that are converted from numeric to character
+str(before2009[, c("MSSubClass", "OverallQual", "OverallCond")])
+
+
+```
+
+## [5 points] Q4.
+*Now, let's treat the missing data by identifying columns with too many missing values (NAs).* *In this chunk, we will compute the number of missing values in each column and store the column names along with the number of missing values in a dataframe called beforeNAs with columns "Columns" (<chr>) and "NAs" (<int>), respectively. Then, print the first 10 rows of beforeNAs.*
+*Note: Our beforeNAs should contain two columns, one containing the names of the columns of before2009, and the other containing the number of NAs in each column.*
+*Then, print only the first 10 (head) rows of this dataframe to verify that your code works.*
+*In the next chunk few chunks, we will determine which columns we should remove and remove them.*
+*Tip: You may find the following syntax useful:*
+*1. colSums(is.na(df)) gives you the total number of NAs in the dataframe df.*
+*2. colnames(df) gives you the names of the columns in dataframe df.*
+*3. cbind(df1, df2) combines columns of two dataframes (df1 and df2). Note that both the results from 1 & 2 are vectors and cbind expects dataframes .*
+*Rubric: 6 points for constructing beforeNAs and 1 point for verification.*
+
+```{r}
+# Computer the number of missing values in each column of before2009 and store the result in a new data frame
+NAs = tibble(as.integer(colSums(is.na(before2009))))
+colnames(NAs) = c('NAs')
+
+# Get the column names of before2009 and store the result in a new data frame 
+column_names = tibble(colnames(before2009))
+colnames(column_names) = c('Columns')
+
+# Combine two new data frames into one, make sure the column names
+beforeNAs = cbind(column_names, NAs) 
+
+# Print first 10 rows of the new data frame
+head(beforeNAs, 10)
+
+
+```
+
+
+## [2 points] Q5.
+*Now, sort the values in the NAs columnn of beforeNAs and print the result.*
+*Tip: sort(df[, col]) sorts the vector stored in df[, col].*
+
+```{r}
+sort(beforeNAs[, 'NAs'], decreasing = TRUE)
+
+```
+
+## [2 points] Q6.
+*Now, examine the result from the previous chunk to decide on which columns you should ignore/remove/drop based on the number of missing values (NAs). For example, some columns have over a 1000 NAs and should definitely be removed. Some other columns have fewer than 10 NAs and should definitely not be removed. We should use our judgment for the columns between 10 and 100 missing values (NAs).*
+*Tip: I looked at these numbers to determine a cutoff point: 105, 52, 51, 51, 49, 49, 23, 19, 18, 3, ...*
+
+```{r}
+### This section doesn't require code. Just fill in the blanks.### 
+# Begin Answer
+#
+# Let us drop all those columns that have more than 23 NAs, this will actually leave column SalePrice in the data frame because 
+# we need it for our analysis per question 7.
+#
+# End Answer
+```
+
+## [5 points] Q7.
+*Drop (remove) all the columns (except SalePrice) that have more missing values than your answer for the cutoff in the previous chunk. Also, drop (remove) the columns called Id and Utilities (all their values are the same). While some of the columns we drop here may contribute to the predictive accuracy of our model, the majority of the information should be contained in the remaining variables.*
+*Then, print only the first 10 (head) rows of this dataframe to verify that your code works.*
+*Rubric: 8 points for constructing beforeNAs and 1 point for verification.*
+
+```{r}
+
+# Get those column names with less or equal than 23 NAs with the exception of not filtering SalePrice (remove those column with more than 23 NAs)
+
+before2009_cutoff = beforeNAs %>%
+                    filter(NAs <= 23 | Columns =='SalePrice')
+
+# Remove column Id and Utilities
+before2009_cutoff = subset(before2009_cutoff, Columns!="Id" & Columns!="Utilities")
+      
+# print(before2009_cutoff$Columns)
+before2009 = select(before2009, before2009_cutoff$Columns)
+head(before2009, 10)     
+
+
+```
+
+## [3 points] Q8.
+*Conduct a multiple linear regression on all variables. Set SalePrice as the response and store the results in regBefore2009.*
+*Then, print the summary of regBefore2009 to verify that your code works.*
+*Tip: The formula for regression is lm(SalePrice ~ ., data = before2009)*
+*Rubric: 2 points for setting regBefore2009 and 1 point for verification.*
+
+```{r}
+
+regBefore2009 = lm(SalePrice ~ ., data = before2009)
+summary(regBefore2009)
+
+```
+
+## [9 points] Q9.
+*Using the above result and your understanding of which variables should be important in determining SalePrice, choose a maximum of 15 variables and create another, smaller regression, and call it regBefore2009optimal.*
+*Then, print the summary of regBefore2009optimal to verify that your code works.*
+*Tip: Normally you would do a more detailed variable selection using a backward or step-wise selection approach but this is NOT required for this question.*
+*Tip: The formula for regression will now look like lm(SalePrice ~ var1 + var2 + ... + varN, data = before2009), where var1, etc. are the variables of your choice.*
+*Tip: Pick the variables with the lowest Pr(>|t|)*
+*Rubric: 8 points for setting regBefore2009optimal and 1 point for verification.*
+
+```{r}
+library(broom)
+
+# Using below codes to find out which columns to look for, select those that have low p values.
+# test = tidy(regBefore2009, quick = FALSE) %>% arrange((p.value))
+# write_csv(test, "test.csv")
+
+# Review the data frame or exported CSV file to choose 15 column names as the variables for analysis.
+regBefore2009optimal = lm(SalePrice ~ TotalBsmtSF + RoofMatl + X2ndFlrSF + X1stFlrSF + KitchenAbvGr + YearBuilt +  LotArea + OverallQual + PoolArea + MasVnrArea + Fireplaces + GarageArea + Heating + ScreenPorch, data = before2009)
+summary(regBefore2009optimal)
+
+```
+
+## [5 points] Q10.
+*Display diagnostic plots of your regression.*
+*Tip: The diagnostic plots include QQ-Plot, Residual versus Fitted Values plot, a $\sqrt{Standardized \; Residuals}$ vs Fitted Values plot, and a Standardized Residuals vs Leverage plot. Do not worry if your residuals have a slight curve to them.*
+*Tip: Google "Plotting Diagnostics for Linear Models - CRAN" and don't use any arguments for the function autoplot in the library ggplot.*
+*Tip: Celebrate your success so far and don't worry about interpreting these results... we will do that later.*
+
+```{r}
+# Check below URL for how to use autoplot
+# https://cran.r-project.org/web/packages/ggfortify/vignettes/plot_lm.html
+
+#install.packages('ggfortify')
+library(ggfortify)
+regBefore2009optimal %>%
+autoplot()
+
+
+```
+
+## [5 points] Q11.
+*Now read in the PricesAfter2009.csv data and assign it to a variable called after2009. This dataset contains data for house prices after 2009.*
+*Then, conduct data cleaning and preparation on after2009 by copying exactly what you did on before2009 in Q3 and Q7.*
+*Tip: Don't overthink, just copy what you did earlier.*
+*Rubric: 1 point for reading and 4 points for data manipulation.*
+
+```{r}
+# Read the data file
+after2009 = read_csv("PricesAfter2009.csv")
+
+# Convert col names MSSubClass, OverallQual, and OverallCond from numeric type to character type
+after2009$MSSubClass = as.character(after2009$MSSubClass)
+after2009$OverallQual = as.character(after2009$OverallQual)
+after2009$OverallCond = as.character(after2009$OverallCond)
+
+# Verify the three col names that are converted from numeric to character
+str(after2009[, c("MSSubClass", "OverallQual", "OverallCond")])
+
+# Remove those columns that have more than 23 NAs.
+after2009 = select(after2009, before2009_cutoff$Columns)
+head(after2009, 10)  
+
+
+```
+
+## [8 points] Q12.
+*Local authorities found in 2011 that there was housing fraud during 2009 and 2010 in several neighborhoods, including NAmes, Gilbert and NridgHt.*
+*Put your detective hat on and get ready to detect possible fraud. Start your investigation by displaying a density plot of SalePrice (after 2009) for all the neighborhoods (with or without fraud) and arrange them all in a grid.*
+*Tip: Data scientists often use density plots  to catch outliers and/or anomalous activity.* 
+*Tip: I recommend using ggplot2 for these plots with facet_wrap(~ Neighborhood). Your call will look something like this: ggplot(data = df, aes(x = densityCol)) + geom_density() + facet_wrap(~ filterCol) + ggtitle("...") +  xlab("...")*
+*Tip: Do not worry about the intervals and formatting other than the axes labels.*
+
+```{r}
+# Check data frame variables to select the right columns in the ggplot
+#str(after2009)
+
+ggplot(data = after2009, aes(x = SalePrice)) + geom_density() + facet_wrap(~ Neighborhood) + ggtitle("Density Plot of Sale Prices for all Neighborhoods After 2009") +  xlab("Sale Prices After 2009")
+
+
+```
+
+## [8 points] Q13.
+*As you can see, the density plot for NAmes does not look any different from other density plots. If there are fraudsters, they are masking their activities.*
+*Now, make two density plots, one for SalePrice in NAmes before 2009 and the other for after 2009. Compare the two to detect whether there is visual evidence of anomalous activity.*
+*Then, do the same for Gilbert to detect whether anything anomalous is detectable between these plots.*
+*Tip: I recommend using the gridExtra library's grid.arrange function for all four plots so you can see the plots for each neighborhood side by side. Specfically:*
+*1. You can store each of the four plots in a variable using syntax similar to the one below (where X is before or after and Y is NAmes or Gilbert, based on what you're plotting):*
+*pX2009Y = ggplot(aes(x = SalePrice)) + geom_density(fill = "yellow", alpha = 0.5) + ggtitle("Density Plot NAmes Before 2009") + xlab('Sale Price')*
+*2. Use the following syntax to print everything in a grid: grid.arrange(pBefore2009NAmes, pAfter2009NAmes, pBefore2009Gilbert, pAfter2009Gilbert, nrow = 2) *
+
+```{r}
+# Note that both NAmes and Gilbert are city names
+
+#install.packages('gridExtra')
+#install.packages("ggplot2")
+#install.packages("dplyr")
+library(gridExtra)
+library(ggplot2)
+library(dplyr)
+
+# Enter your code here for pBefore2009NAmes, pAfter2009NAmes, pBefore2009Gilbert, and pAfter2009Gilbert. Then, uncomment the line below.
+#grid.arrange(pBefore2009NAmes, pAfter2009NAmes, pBefore2009Gilbert, pAfter2009Gilbert, nrow = 2)
+
+# Density Plot for NAmes Before 2009
+pBefore2009NAmes = before2009 %>%
+                   filter(Neighborhood == 'NAmes') %>%
+                   ggplot(aes(x = SalePrice)) + geom_density(fill = "yellow", alpha = 0.5) + ggtitle("Density Plot for NAmes Before 2009") + xlab('Sale Price')
+pBefore2009NAmes
+
+
+# Density Plot for NAmes After 2009
+pAfter2009NAmes =  after2009 %>%
+                   filter(Neighborhood == 'NAmes') %>%
+                   ggplot(aes(x = SalePrice)) + geom_density(fill = "green", alpha = 0.5) + ggtitle("Density Plot for NAmes After 2009") + xlab('Sale Price')
+pAfter2009NAmes
+  
+
+# Density Plot for Gilbert Before 2009
+pBefore2009Gilbert = before2009 %>%
+                     filter(Neighborhood == 'Gilbert') %>%
+                     ggplot(aes(x = SalePrice)) + geom_density(fill = "blue", alpha = 0.5) + ggtitle("Density Plot for Gilbert Before 2009") + xlab('Sale Price')
+pBefore2009Gilbert
+
+# Density Plot for Gilbert After 2009
+pAfter2009Gilbert = after2009 %>%
+                    filter(Neighborhood == 'Gilbert') %>%
+                    ggplot(aes(x = SalePrice)) + geom_density(fill = "pink", alpha = 0.5) + ggtitle("Density Plot for Gilbert After 2009") + xlab('Sale Price')
+pAfter2009Gilbert
+
+grid.arrange(pBefore2009NAmes, pAfter2009NAmes, pBefore2009Gilbert, pAfter2009Gilbert, nrow = 2)
+
+```
+
+
+## [5 points] Q14
+*Analyze the visualizations above for Gilbert and NAmes to detect possible fraud.*
+*Tip: Look for a fraud patterns.*
+
+```{r}
+### This section doesn't require code. Just answer the question as a comment.
+#Begin Answer
+# The two chart shapes for NAmes before 2009 and after 2009 are so similar, which suggest little 
+# chance of fraud.
+# The two chart shapes for Gilbert before 2009 and after 2009 are different. 
+# There is a spike in the after 2009 chart when the sale price is around $150,000, which suggests
+# there is a chance of fraud.
+#End Answer
+```
+
+## [5 points] Q15.
+*You may feel that the fraudsters were not very careful in masking their activity after identifying the fraud pattern. However, we don't have sufficient evidence to claim that this is fraudulent activity (just based on the density plots). We will now use multiple linear regression to attempt to get more evidence.*
+*Run a regression on the data in after2009 (using variables you already know to be good at predicting the SalePrice) and store the result in variable called regAfter2009optimal.*
+*Then print summary of regAfter2009optimal to verify that your code works.*
+*Tip: You can reuse your previous work on before2009.*
+*Rubric: 4 points for regression, 1 point for printing summary.*
+
+```{r}
+regAfter2009optimal = lm(SalePrice ~ TotalBsmtSF + RoofMatl + X2ndFlrSF + X1stFlrSF + KitchenAbvGr + YearBuilt +  LotArea + OverallQual + PoolArea + MasVnrArea + Fireplaces + GarageArea + Heating + ScreenPorch, data = after2009)
+summary(regAfter2009optimal)
+
+
+
+
+```
+
+## [2 points] Q16.
+*Now, display diagnostic plots of your regression (regAfter2009optimal).*
+*Tip: You can reuse your previous work on before2009 where you learned autoplot().*
+
+```{r}
+library(ggfortify)
+regAfter2009optimal %>%
+autoplot()
+
+```
+
+## [6 points] Q17.
+*Now, let's focus on the Residual vs. Fitted graph by plotting it by itself (using ggplot).*
+*Tip: Call ggplot with the data parameter is regAfter2009optimal the aes parameters are (.fitted, .resid), respectively. You can use stat_smooth() for the trendline and appropriately title the plot and label both axes.*
+*Tip: Check out cheatsheets for ggplot2 at https://www.rstudio.com/resources/cheatsheets/.*
+
+```{r}
+# https://ggplot2.tidyverse.org/reference/geom_smooth.html
+
+after2009_fitted_residual = ggplot(regAfter2009optimal, aes(.fitted, .resid)) + geom_point() + geom_smooth() + ggtitle("Fitted values vs Residuals") + xlab('Fitted values') + ylab('Residuals')
+after2009_fitted_residual
+
+
+```
+
+## [5 points] Q18.
+*Identify any outliers in the visualization from the last two chunks.*
+
+```{r}
+### This section doesn't require code. Just answer the question as a comment.
+#Begin Answer
+# There are some outliers when values for residuals are more than 1e+05 or less than -1e+0.5 
+# 
+#End Answer
+```
+
+
+## [20 points] Q19.
+*Now, let's think like a fraudster and consider techniques smarter fraudsters may use to avoid detection. Instead of misrepresenting values by just reporting the mean price of the houses sold before 2009 for the price after 2009, what is something more clever and nuanced that the fraudsters could report for the price after 2009? Specifically, consider a method smarter fraudsters may use to set the rows in which the prices are misrepresented. Then, using this method generate and set values for the SalePrice in those rows.*
+
+*Then, try your fraud detection techniques of comparing old and new density plots as well as the diagnostic plots to show that now the fraud is much harder to detect.*
+
+*Tip: You must use exact commands/functions to set the values and tell us why you chose to generate values this way. You must share the resulting diagnostic plots with us.*
+
+*Tip: Consider using more information (instead of the mean values) to generate the fraudulent values using what you learned from your work above. You can do this in two steps:*
+
+  *Step 1: Find the rows set by the stupid fraudsters (by searching for the SalePrice of 142769.7).*
+  *Step 2: Use a smarter way to generate and replace these values.*
+  
+*Tip: For plotting, you may use ggplot to plot NAmes and Gilbert. My ggplot call looked like this:*
+*before2009 %>% filter(Neighborhood == "???") %>% ggplot(aes(x = SalePrice)) + geom_density(fill = "???", alpha = 0.5) + ggtitle("???") +   xlab("???")*
+
+*The %>% is a pipe that takes output from something and sends it as input to the next thing. So, before2009 %>% filter(Neighborhood == "???") is the same as filter(before2009, Neighborhood == "???")*
+*Tip: "Always Be Closing" fraud by refining your model because fraudsters adapt their methods after they discover that you can detect them. (See https://www.youtube.com/watch?v=Yz246_Pjjkc if you're too young for the "Always Be Closing" reference.)*
+
+*Rubric: 10 points each for the fraud method and the plots.*
+
+```{r}
+### This section requires you to first explain your idea. Just answer this as a comment.
+#Begin Answer
+# We first find out all those rows with SalePrice column equal to 142769.7. 
+# We then use predict() function in R to generate a new set of values for SalePrice based on data frame regAfter2009optimal which represents 15 most important variables selected by us.
+# We then delete those rows with SalePrice column equal to 142769.7 from the after2009 data frame.
+# We then combine the updated data set (using predict values instead of the mean values) with the after2009 data frame.
+#End Answer
+
+
+# Find those rows with SalePrice equal to 142769.7 that is set by the "stupid fraudsters" by using the before2009 mean.
+stupid_fraudsters = after2009 %>%
+                    filter(SalePrice == '142769.7')
+#str(stupid_fraudsters)
+
+# Use a smarter way to generate and replace these values
+# Update those SalePrices that are equal to '142769.7' with predict values
+# https://www.tutorialspoint.com/r/r_linear_regression.htm
+
+smarter_fraudsters = stupid_fraudsters
+smarter_fraudsters$SalePrice = predict(regBefore2009optimal, stupid_fraudsters)
+
+
+# Remove those rows with SalePrices that are equal to '142769.7'
+after2009_remove_stupid_fraudsters = subset(after2009, after2009$SalePrice != '142769.7' )
+
+# Merge two data frames to get a new data frame
+after2009 = rbind(after2009_remove_stupid_fraudsters, smarter_fraudsters)
+after2009
+
+
+# Enter your code here for pBefore2009NAmes, pAfter2009NAmes, pBefore2009Gilbert, and pAfter2009Gilbert. Then, uncomment the line below.
+#grid.arrange(before2009NAmes, after2009NAmes, before2009Gilbert, after2009Gilbert, nrow = 2)
+
+# Updated Density Plot for NAmes Before 2009
+pBefore2009NAmes = after2009 %>%
+                   filter(Neighborhood == 'NAmes') %>%
+                   ggplot(aes(x = SalePrice)) + geom_density(fill = "yellow", alpha = 0.5) + ggtitle("Updated Density Plot for NAmes Before 2009") + xlab('Sale Price')
+pBefore2009NAmes
+
+# Updated Density Plot for NAmes After 2009
+pAfter2009NAmes =  after2009 %>%
+                   filter(Neighborhood == 'NAmes') %>%
+                   ggplot(aes(x = SalePrice)) + geom_density(fill = "green", alpha = 0.5) + ggtitle("Updated Density Plot for NAmes After 2009") + xlab('Sale Price')
+pAfter2009NAmes
+  
+# Updated Density Plot for Gilbert Before 2009
+pBefore2009Gilbert = after2009 %>%
+                     filter(Neighborhood == 'Gilbert') %>%
+                     ggplot(aes(x = SalePrice)) + geom_density(fill = "blue", alpha = 0.5) + ggtitle("Updated Density Plot for Gilbert Before 2009") + xlab('Sale Price')
+pBefore2009Gilbert
+
+# Density Plot for Gilbert After 2009
+pAfter2009Gilbert = after2009 %>%
+                    filter(Neighborhood == 'Gilbert') %>%
+                    ggplot(aes(x = SalePrice)) + geom_density(fill = "pink", alpha = 0.5) + ggtitle("Updated Density Plot for Gilbert After 2009") + xlab('Sale Price')
+pAfter2009Gilbert
+
+grid.arrange(pBefore2009NAmes, pAfter2009NAmes, pBefore2009Gilbert, pAfter2009Gilbert, nrow = 2)
+
+
+```
+
+
+## [5 points] Q20.
+*Now, run a regression on the new data in after2009 using variables you know are good at predicting SalePrice. Store the result in variable called regAfter2009optimalFraud.*
+*Then print summary of regAfter2009optimalFraud to verify that your code works.*
+*Tip: You can reuse previous work.*
+*Rubric: 4 points for regression, 1 point for printing summary.*
+
+```{r}
+# Run the regression analysis on the updated after2009 data frame based on those 15 selected variable  
+regAfter2009optimalFraud = lm(SalePrice ~ TotalBsmtSF + RoofMatl + X2ndFlrSF + X1stFlrSF + KitchenAbvGr + YearBuilt +  LotArea + OverallQual + PoolArea + MasVnrArea + Fireplaces + GarageArea + Heating + ScreenPorch, data = after2009)
+summary(regAfter2009optimalFraud)
+
+```
+
+## [2 points] Q21.
+*Now, display diagnostic plots of your regression (regAfter2009optimalFraud).*
+*Tip: You have already know how to autoplot.*
+
+```{r}
+# Display diagnostic plots of the regression
+regAfter2009optimalFraud %>%
+autoplot()
+
+
+```
+
+## [5 points] Q22.
+*Now, look for outliers in diagnostic plots of your regression (regAfter2009optimal).*
+*Tip: You have already know how to autoplot.*
+
+```{r}
+### This section doesn't require code. Just answer the question as a comment.
+#Begin Answer
+# With the updated data frame after2009, now it is harder to tell if there is any fraud.
+#End Answer
+```
+
+## [5 points] Q23. 
+*Knit to html after eliminating all the errors. Submit both the Rmd and html files.* 
+*Tip: Do not worry about minor formatting issues.*
+```{r}
+### This section doesn't require code. Just knit and submit the Rmd and html files.### 
+```
+
+## Question 2 What did you learn from the OutlierHomes assignment?
+*What we learned from the OutlierHomes assignment was that it is difficult to find fraud using a massive dataset without doing the heavy lifting upfront to remove data columns that could add noise to the analysis. Given how many variables could be affecting sales price, we need to investigate each variable both independently and as a multivariate regression model to help filter out any cases of fraud that may look suspicious at first glance. By eliminating columns of data that had no statistical relevance to sales price, we were able to hone in on the actual variables that impact sales price to determine whether or not fraud was apparent in any of these scenarios.  
+
+## Question 3 If your professor didn't care about your learning-life blend, he would have assigned about 30 more questions to enhance your learning. Instead, he is asking you to please answer the following question: If you were to continue this investigation in real life, what would you plan to refine your model?
+*What we would plan in order to refine our model is to review examples of prior fraud committed by 'Smarter Fraudsters' in real life. We also assumed that the fraud was in the output variable 'Sales Price' but we didn't do that much research into whether or not the input variables could have been changed in order to mask the fraud. We would take the research we have done to date to isolate the independent variables that are impacting sales price and study them to understand if any fraud was occurring in items such as squared feet or lot size. Lastly, we would want to explore this research going years forward and back to look for other examples of fraud. 
