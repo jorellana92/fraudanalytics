@@ -1,7 +1,7 @@
 ---
 title: "FlightDelays"
-author: "Tim Sun, Josh Orellana, Yi Xu, Tony Segura, Mark Mitchell"
-date: "10/01/2022"
+author: "[redacted]"
+date: "[redacted]"
 output: html_document
 ---
 
